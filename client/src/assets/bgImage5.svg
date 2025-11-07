@@ -1,0 +1,59 @@
+<!--?xml version="1.0" encoding="utf-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Dark purple chat background with glowing chat logo">
+  <defs>
+    <!-- Base dark gradient -->
+    <linearGradient id="base" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#000000"></stop>
+      <stop offset="50%" stop-color="#0b0220"></stop>
+      <stop offset="100%" stop-color="#000000"></stop>
+    </linearGradient>
+
+    <!-- Purple glow areas -->
+    <radialGradient id="purpleGlow" cx="25%" cy="25%" r="50%">
+      <stop offset="0%" stop-color="#6d28d9" stop-opacity="0.25"></stop>
+      <stop offset="60%" stop-color="#4c1d95" stop-opacity="0.08"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <radialGradient id="blueGlow" cx="75%" cy="75%" r="60%">
+      <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.20"></stop>
+      <stop offset="60%" stop-color="#312e81" stop-opacity="0.06"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Center logo glow -->
+    <radialGradient id="logoGlow" cx="50%" cy="50%" r="30%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"></stop>
+      <stop offset="60%" stop-color="#6d28d9" stop-opacity="0.12"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Blur filter for soft edges -->
+    <filter id="softBlur">
+      <feGaussianBlur stdDeviation="50"></feGaussianBlur>
+    </filter>
+
+    <!-- Vignette for dark edges -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="80%">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.9"></stop>
+    </radialGradient>
+  </defs>
+
+  <!-- Background layers -->
+  <rect width="1600" height="900" fill="url(#base)"></rect>
+  <ellipse cx="300" cy="200" rx="500" ry="300" fill="url(#purpleGlow)" filter="url(#softBlur)"></ellipse>
+  <ellipse cx="1200" cy="700" rx="500" ry="300" fill="url(#blueGlow)" filter="url(#softBlur)"></ellipse>
+  <circle cx="800" cy="450" r="350" fill="url(#logoGlow)" filter="url(#softBlur)"></circle>
+
+  <!-- Center chat bubble logo -->
+  <g transform="translate(800,450) scale(4)" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-20 -5c0 -10 9 -18 20 -18s20 8 20 18v10c0 10 -9 18 -20 18 -3 0 -7 -1 -9 -2l-9 5 2 -9c-3 -3 -4 -7 -4 -12z" fill="none" stroke="#c4b5fd" stroke-width="1.8"></path>
+    <circle cx="-5" cy="0" r="1.8" fill="#c4b5fd"></circle>
+    <circle cx="5" cy="0" r="1.8" fill="#c4b5fd"></circle>
+    <circle cx="15" cy="0" r="1.8" fill="#c4b5fd"></circle>
+  </g>
+
+  <!-- Vignette overlay -->
+  <rect width="1600" height="900" fill="url(#vignette)"></rect>
+</svg>
