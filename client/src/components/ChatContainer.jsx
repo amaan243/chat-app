@@ -10,9 +10,9 @@ import toast from 'react-hot-toast';
 const ChatContainer = () => {
 
   const { messages, selectedUser,
-    setSelectedUser, sendMessage, getMessages } = useContext(ChatContext);
+    setSelectedUser, sendMessage, getMessages,typingUsers } = useContext(ChatContext);
   const { authUser,
-    onlineUsers } = useContext(AuthContext);
+    onlineUsers,socket } = useContext(AuthContext);
 
   const scrollEnd = useRef();
 
@@ -54,15 +54,58 @@ const ChatContainer = () => {
   return selectedUser ? (
     <div className='h-full overflow-scroll relative backdrop-blur-lg'>
       {/* ----Header---- */}
-      <div className='flex items-center gap-3 py-3 mx-4 border-b border-stone-500'>
+      {/* <div className='flex items-center gap-3 py-3 mx-4 border-b border-stone-500'>
         <img src={selectedUser.profilePic || assets.avatar_icon} alt="" className='w-8 rounded-full' />
         <p className=' flex-1 text-lg text-white flex items-center gap-2 '>
           {selectedUser.fullName}
           {onlineUsers.includes(selectedUser._id) && <span className='w-2 h-2 rounded-full bg-green-500'></span>}
+          
         </p>
+        {typingUsers?.[selectedUser._id] && (
+    <p className='text-sm text-purple-400 absolute left-0 top-7'>
+      typing...
+    </p>
+  )}
         <img onClick={() => setSelectedUser(null)} src={assets.arrow_icon} alt="" className='md:hidden max-w-7' />
         <img src={assets.help_icon} alt="" className='max-md:hidden max-w-5' />
-      </div>
+      </div> */}
+      {/* ----Header---- */}
+<div className="flex items-center gap-3 py-3 mx-4 border-b border-stone-500 relative">
+  <img
+    src={selectedUser.profilePic || assets.avatar_icon}
+    alt=""
+    className="w-8 rounded-full"
+  />
+
+  {/* Username + Online + Typing */}
+  <div className="flex flex-col relative">
+    <div className="flex items-center gap-2">
+      <p className="text-lg text-white">{selectedUser.fullName}</p>
+
+      {onlineUsers.includes(selectedUser._id) && (
+        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+      )}
+    </div>
+
+    {/* ✅ Typing Indicator */}
+    {typingUsers?.[selectedUser._id] && (
+      <span className="text-sm text-purple-400 mt-[2px]">typing...</span>
+    )}
+  </div>
+
+  <img
+    onClick={() => setSelectedUser(null)}
+    src={assets.arrow_icon}
+    alt=""
+    className="md:hidden max-w-7 ml-auto cursor-pointer"
+  />
+  <img
+    src={assets.help_icon}
+    alt=""
+    className="max-md:hidden max-w-5 ml-2"
+  />
+</div>
+
       {/* ----Chat Area---- */}
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
         {
@@ -90,7 +133,16 @@ const ChatContainer = () => {
       {/* bottom */}
       <div className='absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3'>
         <div className='flex-1 flex items-center bg-gray-100/12 px-3 rounded-full'>
-          <input onChange={(e) => setInput(e.target.value)} value={input}
+          <input onChange={(e) =>{ setInput(e.target.value);
+                if (selectedUser) {
+      socket.emit('typing', { sender: authUser._id, receiver: selectedUser._id });
+      clearTimeout(window.typingTimeout);
+      window.typingTimeout = setTimeout(() => {
+        socket.emit('stopTyping', { sender: authUser._id, receiver: selectedUser._id });
+      }, 1500); // stop typing after 1.5s of no input
+    }
+            
+          }} value={input}
             onKeyDown={(e) => e.key === 'Enter' ? handelSendMessage(e) : null} type="text" placeholder='Send a message' className='flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400' />
           <input onChange={handelSendImage} type="file" id="image" accept='image/png, image/jpeg' hidden />
           <label htmlFor="image">

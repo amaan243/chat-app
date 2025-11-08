@@ -13,6 +13,7 @@ const Sidebar = () => {
         setSelectedUser,
         unseenMessages,
         setUnseenMessages, // ✅ Add this so we can reset unseen messages
+        typingUsers,
     } = useContext(ChatContext);
 
     const { logout, onlineUsers } = useContext(AuthContext);
@@ -30,7 +31,7 @@ const Sidebar = () => {
         getUsers();
     }, [onlineUsers]);
 
-    
+
 
     return (
         <div className={`bg-[#8185B2]/10 h-full p-5 rounded-r-xl overflow-y-scroll text-white ${selectedUser ? 'max-md:hidden' : ''}`}>
@@ -92,9 +93,17 @@ const Sidebar = () => {
 
                             <div className='flex flex-col leading-5'>
                                 <p>{user.fullName}</p>
-                                <span className={`${isOnline ? 'text-green-400' : 'text-neutral-400'} text-xs`}>
+                                {/* <span className={`${isOnline ? 'text-green-400' : 'text-neutral-400'} text-xs`}>
                                     {isOnline ? 'online' : 'offline'}
+                                </span> */}
+                                <span className='text-xs'>
+                                    {typingUsers?.[user._id]
+                                        ? <span className="text-purple-400">typing...</span>
+                                        : isOnline
+                                            ? <span className="text-green-400">online</span>
+                                            : <span className="text-neutral-400">offline</span>}
                                 </span>
+
                             </div>
 
                             {/* ✅ Show unseen count badge */}
