@@ -10,6 +10,8 @@ export const ChatProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [unseenMessages, setUnseenMessages] = useState({}); // ✅ make sure initialized as empty object
+  const [typingUsers, setTypingUsers] = useState({}); // { userId: true/false }
+
 
   const { socket, axios, authUser } = useContext(AuthContext);
 
@@ -63,8 +65,12 @@ export const ChatProvider = ({ children }) => {
     socket.on("newMessage", (newMessage) => {
       console.log("🟣 Incoming message:", newMessage);
 
+      
+
       const senderId = newMessage.sender ;
       const receiverId = newMessage.receiver;
+
+      
 
       // ✅ If I am currently chatting with the sender → show immediately
       if (selectedUser && senderId === selectedUser._id) {
@@ -84,11 +90,23 @@ export const ChatProvider = ({ children }) => {
         });
       }
     });
+    socket.on("userTyping", ({ sender }) => {
+  setTypingUsers((prev) => ({ ...prev, [sender]: true }));
+});
+
+socket.on("userStopTyping", ({ sender }) => {
+  setTypingUsers((prev) => ({ ...prev, [sender]: false }));
+});
   };
 
   // ✅ Cleanup
   const unsubscribeFromMessages = () => {
-    if (socket) socket.off("newMessage");
+    if (socket){ 
+      socket.off("newMessage");
+      socket.off("userTyping");
+      socket.off("userStopTyping");
+  
+    }
   };
 
   useEffect(() => {
@@ -106,6 +124,7 @@ export const ChatProvider = ({ children }) => {
     unseenMessages,
     setUnseenMessages,
     getMessages,
+    typingUsers,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
