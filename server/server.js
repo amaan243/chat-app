@@ -46,6 +46,21 @@ io.on('connection', (socket) => {
       delete userSocketMap[userId];//remove user from online users map
       io.emit('getOnlineUsers',Object.keys(userSocketMap));//broadcast updated online users to all connected clients
     })
+
+    // 🟢 Forward "messageSeenByReceiver" from receiver -> sender
+socket.on("messageSeenByReceiver", ({ messageId, receiver, sender }) => {
+  console.log("📨 Seen event received:", { messageId, receiver, sender });
+
+  const senderSocketId = userSocketMap[sender];
+  if (senderSocketId) {
+    io.to(senderSocketId).emit("messageSeenByReceiver", {
+      messageId,
+      receiver,
+    });
+    console.log("💙 Seen event sent to sender socket:", senderSocketId);
+  }
+});
+
   })
 
 

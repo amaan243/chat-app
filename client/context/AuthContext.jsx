@@ -64,8 +64,11 @@ export const AuthProvider = ({ children }) => {
         setOnlineUsers([]);
         axios.defaults.headers.common['token'] =null;
         toast.success("Logged out successfully");   
-        socket.disconnect();
-        setSocket(null);    
+         if (socket) {
+           socket.disconnect();
+            setSocket(null);
+         }
+   
     }
 
     const updateProfile=async (body)=>{
@@ -81,6 +84,10 @@ export const AuthProvider = ({ children }) => {
     }
 
     //connect to socket server
+
+    
+
+
     const connectSocket = (userData) => {
          if(socket?.connected || !userData) return;
           
@@ -109,6 +116,9 @@ export const AuthProvider = ({ children }) => {
         }
         checkAuth();
     },[]);
+
+  
+
    
     const value = {
         axios,
