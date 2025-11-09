@@ -59,55 +59,122 @@ export const ChatProvider = ({ children }) => {
   };
 
   // ✅ Listen for new messages via socket
-  const subscribeToMessages = async () => {
-    if (!socket) return;
 
-    socket.on("newMessage", (newMessage) => {
-      console.log("🟣 Incoming message:", newMessage);
+const subscribeToMessages = async () => {
+  if (!socket) return;
 
-      
+  // 🟣 Receive new incoming message
+  socket.on("newMessage", (newMessage) => {
+    console.log("🟣 Incoming message:", newMessage);
 
-      const senderId = newMessage.sender ;
-      const receiverId = newMessage.receiver;
+    const senderId = newMessage.sender;
+    const receiverId = newMessage.receiver;
 
-      
-
-      // ✅ If I am currently chatting with the sender → show immediately
-      if (selectedUser && senderId === selectedUser._id) {
-        newMessage.seen = true;
-        setMessages((prev) => [...prev, newMessage]);
-        axios.put(`/api/messages/mark/${newMessage._id}`).catch(() => {});
-      }
-      // ✅ Else, this message is unseen
-      else if (receiverId === authUser._id) {
-        setUnseenMessages((prev = {}) => {
-          const updated = {
-            ...prev,
-            [senderId]: (prev?.[senderId] || 0) + 1,
-          };
-          console.log("✅ Updated unseenMessages:", updated);
-          return updated;
-        });
-      }
-    });
-    socket.on("userTyping", ({ sender }) => {
-  setTypingUsers((prev) => ({ ...prev, [sender]: true }));
-});
-
-socket.on("userStopTyping", ({ sender }) => {
-  setTypingUsers((prev) => ({ ...prev, [sender]: false }));
-});
-  };
-
-  // ✅ Cleanup
-  const unsubscribeFromMessages = () => {
-    if (socket){ 
-      socket.off("newMessage");
-      socket.off("userTyping");
-      socket.off("userStopTyping");
-  
+    // ✅ If currently chatting with sender, mark seen immediately
+    if (selectedUser && senderId === selectedUser._id) {
+      newMessage.seenBy = [authUser._id];
+      setMessages((prev) => [...prev, newMessage]);
+      axios.put(`/api/messages/mark/${newMessage._id}`).catch(() => {});
     }
-  };
+    // ✅ Else, mark as unseen (increase unseen count)
+    else if (receiverId === authUser._id) {
+      setUnseenMessages((prev = {}) => {
+        const updated = {
+          ...prev,
+          [senderId]: (prev?.[senderId] || 0) + 1,
+        };
+        return updated;
+      });
+    }
+  });
+
+  // 🟢 Message delivered update (from backend)
+  socket.on("messageDelivered", (messageId) => {
+    console.log("✅ Message delivered:", messageId);
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg._id === messageId ? { ...msg, delivered: true } : msg
+      )
+    );
+  });
+
+  // 🟢 Messages seen update (from backend)
+  socket.on("messagesSeen", ({ by, user }) => {
+    console.log("💙 Messages seen by:", by);
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.receiver === by
+          ? { ...msg, seenBy: [...(msg.seenBy || []), by] }
+          : msg
+      )
+    );
+  });
+
+  // ✅ NEW: Receiver has chat open → mark message seen instantly
+  socket.on("messageReceivedInActiveChat", async ({ messageId, sender }) => {
+    console.log("💬 Message received in active chat:", messageId);
+
+    try {
+      // Update database (mark as seen)
+      await axios.put(`/api/messages/mark/${messageId}`);
+
+      // Update receiver’s local state immediately
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? { ...msg, seenBy: [...(msg.seenBy || []), authUser._id] }
+            : msg
+        )
+      );
+
+      // 🔁 Tell sender immediately that message was seen
+      socket.emit("messageSeenByReceiver", {
+        messageId,
+        receiver: authUser._id,
+        sender,
+      });
+    } catch (error) {
+      console.log("❌ Error marking message as seen:", error.message);
+    }
+  });
+
+  // ✅ NEW: Sender gets real-time blue tick when receiver sees message
+  socket.on("messageSeenByReceiver", ({ messageId, receiver }) => {
+    console.log("💙 Message seen by receiver:", receiver);
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg._id === messageId
+          ? { ...msg, seenBy: [...(msg.seenBy || []), receiver] }
+          : msg
+      )
+    );
+  });
+
+  // 🟣 Typing events
+  socket.on("userTyping", ({ sender }) => {
+    setTypingUsers((prev) => ({ ...prev, [sender]: true }));
+  });
+
+  socket.on("userStopTyping", ({ sender }) => {
+    setTypingUsers((prev) => ({ ...prev, [sender]: false }));
+  });
+};
+
+
+const unsubscribeFromMessages = () => {
+  if (socket) {
+    socket.off("newMessage");
+    socket.off("messageDelivered");
+    socket.off("messagesSeen");
+    socket.off("userTyping");
+    socket.off("userStopTyping");
+    socket.off("messageReceivedInActiveChat"); 
+    socket.off("messageSeenByReceiver"); 
+  }
+};
+
+
+ 
 
   useEffect(() => {
     subscribeToMessages();
