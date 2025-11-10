@@ -6,30 +6,37 @@ import cloudinary from "../lib/cloudinaru.js";
 import { io, userSocketMap } from "../server.js";
 
 // 🟢 1. Get users for sidebar
+
 export const getUserforsidebar = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
-      "-password"
-    );
+    const userId = req.user._id; // logged-in user (e.g. User B)
+    
+    // Get all users except me
+    const filteredUsers = await User.find({ _id: { $ne: userId } }).select("-password");
 
-    // Count unseen messages from each user
-    let unseenMessage = {};
-    const promise = filteredUsers.map(async (user) => {
-      const message = await Message.find({
-        sender: user._id,
-        receiver: userId,
-        seenBy: { $ne: userId },
+    // Calculate unseen messages from each user
+    let unseenMessages = {};
+
+    const promises = filteredUsers.map(async (user) => {
+      const messages = await Message.find({
+        sender: user._id,         // message sent by this user
+        receiver: userId,         // to me
+        $or: [
+          { seenBy: { $exists: false } },   // for old messages
+          { seenBy: { $nin: [userId] } }    // not seen by me yet
+        ],
       });
-      if (message.length > 0) {
-        unseenMessage[user._id] = message.length;
+
+      if (messages.length > 0) {
+        unseenMessages[user._id] = messages.length;
       }
     });
-    await Promise.all(promise);
 
-    res.json({ success: true, users: filteredUsers, unseenMessage });
+    await Promise.all(promises);
+
+    res.json({ success: true, users: filteredUsers, unseenMessages });
   } catch (error) {
-    console.log(error.message);
+    console.log("❌ getUserforsidebar error:", error.message);
     res.json({ success: false, message: error.message });
   }
 };
@@ -41,6 +48,7 @@ export const getMessages = async (req, res) => {
     const { id: selectedUserId } = req.params;
     const myId = req.user._id;
 
+    // 1️⃣ Get all messages between the two users
     const messages = await Message.find({
       $or: [
         { sender: myId, receiver: selectedUserId },
@@ -48,24 +56,30 @@ export const getMessages = async (req, res) => {
       ],
     });
 
-    // 🟢 Mark all messages from selected user → me as seen
-    await Message.updateMany(
+    // 2️⃣ Mark unseen messages (sent *to me*) as seen
+    const updateResult = await Message.updateMany(
       { sender: selectedUserId, receiver: myId, seenBy: { $ne: myId } },
       { $addToSet: { seenBy: myId } }
     );
 
-    // 🟢 Real-time notify sender that I have seen messages
-    const senderSocketId = userSocketMap[selectedUserId];
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("messagesSeen", {
-        by: myId,
-        user: selectedUserId,
-      });
+    // 3️⃣ If any messages were updated, emit "messagesSeen" event to sender
+    if (updateResult.modifiedCount > 0) {
+      const senderSocketId = userSocketMap[selectedUserId]; // get sender's socket ID
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesSeen", {
+          by: myId, // ✅ who saw the messages
+          user: selectedUserId, // ✅ whose messages were seen
+        });
+        console.log(`💙 Emitted "messagesSeen" to ${selectedUserId}`);
+      } else {
+        console.log("⚠️ Sender offline, skipping messagesSeen emit");
+      }
     }
 
+    // 4️⃣ Send messages back to frontend
     res.json({ success: true, messages });
   } catch (error) {
-    console.log(error.message);
+    console.error("❌ getMessages error:", error.message);
     res.json({ success: false, message: error.message });
   }
 };
