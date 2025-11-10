@@ -42,69 +42,6 @@ export const getUserforsidebar = async (req, res) => {
 };
 
 
-// export const getUserforsidebar = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-//     const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
-//       "-password"
-//     );
-
-//     // Count unseen messages from each user
-//     let unseenMessage = {};
-//     const promise = filteredUsers.map(async (user) => {
-//       const message = await Message.find({
-//         sender: user._id,
-//         receiver: userId,
-//         $or: [{ seenBy: { $exists: false } }, { seenBy: { $ne: userId } }],
-//       });
-//       if (message.length > 0) {
-//         unseenMessage[user._id] = message.length;
-//       }
-//     });
-//     await Promise.all(promise);
-
-//     res.json({ success: true, users: filteredUsers, unseenMessage });
-//   } catch (error) {
-//     console.log(error.message);
-//     res.json({ success: false, message: error.message });
-//   }
-// };
-
-
-
-// export const getMessages = async (req, res) => {
-//   try {
-//     const { id: selectedUserId } = req.params;
-//     const myId = req.user._id;
-
-//     const messages = await Message.find({
-//       $or: [
-//         { sender: myId, receiver: selectedUserId },
-//         { sender: selectedUserId, receiver: myId },
-//       ],
-//     });
-
-//     // 🟢 Mark all messages from selected user → me as seen
-//     await Message.updateMany(
-//       { sender: selectedUserId, receiver: myId, seenBy: { $ne: myId } },
-//       { $addToSet: { seenBy: myId } }
-//     );
-
-//     // 🟢 Real-time notify sender that I have seen messages
-//     const senderSocketId = userSocketMap[selectedUserId];
-//     if (senderSocketId) {
-//       io.to(senderSocketId).emit("messagesSeen", {
-//         by: myId,
-//         user: selectedUserId,
-//       });
-//     }
-
-//     res.json({ success: true, messages });
-//   } catch (error) {
-//     console.log(error.message);
-//     res.json({ success: false, message: error.message });
-//   }
-// };
 
 export const getMessages = async (req, res) => {
   try {
