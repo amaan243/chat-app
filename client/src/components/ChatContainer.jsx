@@ -10,13 +10,19 @@ import toast from 'react-hot-toast';
 const ChatContainer = () => {
 
   const { messages, selectedUser,
-    setSelectedUser, sendMessage, getMessages, typingUsers } = useContext(ChatContext);
+    setSelectedUser, sendMessage, getMessages, typingUsers, deleteMessage } = useContext(ChatContext);
   const { authUser,
     onlineUsers, socket } = useContext(AuthContext);
 
   const scrollEnd = useRef();
 
   const [input, setInput] = useState("");
+
+  const longPressTimer = useRef(null);
+  const longPressTarget = useRef(null);
+  const LONG_PRESS_DURATION = 600;
+
+
 
   const handelSendMessage = async (e) => {
     e.preventDefault();
@@ -51,6 +57,53 @@ const ChatContainer = () => {
       scrollEnd.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages])
+
+  useEffect(() => {
+    if (!socket) return;
+
+    if (selectedUser) {
+      socket.emit('setActiveChat', selectedUser._id);
+    } else {
+      socket.emit('clearActiveChat');
+    }
+
+    return () => {
+      if (socket) socket.emit('clearActiveChat');
+    };
+  }, [socket, selectedUser]);
+
+  const startLongPress = (e, msg) => {
+    // Prevent multiple timers
+    clearTimeout(longPressTimer.current);
+    longPressTarget.current = msg;
+
+    // Start timer
+    longPressTimer.current = setTimeout(() => {
+      // Only allow delete if sender is authUser and not seen
+      if (msg.sender === authUser._id) {
+        if (!msg.seenBy?.length) {
+          // confirm popup (replace with custom modal if you have one)
+          const confirmDelete = window.confirm("Delete message for everyone? This can't be undone.");
+          if (confirmDelete) {
+            deleteMessage(msg._id);
+          }
+        } else {
+          toast.error("Cannot delete message — it has been seen.");
+        }
+      }
+    }, LONG_PRESS_DURATION);
+  };
+
+  const cancelLongPress = () => {
+    clearTimeout(longPressTimer.current);
+    longPressTarget.current = null;
+  };
+
+  const onTouchMoveHandler = (e) => {
+    // small move tolerance could be added; for simplicity cancel immediately
+    cancelLongPress();
+  };
+
   return selectedUser ? (
     <div className='h-full overflow-scroll relative backdrop-blur-lg'>
 
@@ -95,9 +148,36 @@ const ChatContainer = () => {
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
         {
           messages.map((msg, index) => (
-            <div key={index} className={`flex items-end gap-2 justify-end ${msg.sender !== authUser._id && 'flex-row-reverse'}`}>
+            <div key={index} className={`flex items-end gap-2 justify-end ${msg.sender !== authUser._id && 'flex-row-reverse'}`}
+              onContextMenu={(e) => {
+                // ONLY allow sender to attempt delete
+                if (msg.sender === authUser._id && !msg.seenBy?.length) {
+                  e.preventDefault();
+                  const confirmDelete = window.confirm("Delete message for everyone? This can't be undone.");
+                  if (confirmDelete) {
+                    // use deleteMessage from ChatContext
+                    deleteMessage(msg._id);
+                  }
+                } else if (msg.sender === authUser._id && msg.seenBy?.length) {
+                  e.preventDefault();
+                  toast.error("Cannot delete message — it has been seen.");
+                }
+              }}
+              style={{ cursor: msg.sender === authUser._id ? "context-menu" : "default" }}
+              onTouchStart={(e) => startLongPress(e, msg)}
+              onTouchEnd={(e) => cancelLongPress()}
+              onTouchCancel={(e) => cancelLongPress()}
+              onTouchMove={onTouchMoveHandler}
 
-              {msg.image ? (
+              onMouseDown={(e) => startLongPress(e, msg)}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}>
+
+              {msg.deleted ? (
+                <div className={`p-2 md:text-sm font-light rounded-lg max-w-[220px] break-all bg-gray-600/30 text-gray-200 italic`}>
+                  {msg.deletedBy === authUser._id ? "You deleted this message" : "This message was deleted"}
+                </div>
+              ) : msg.image ? (
                 <div className="relative mb-8">
                   <img
                     src={msg.image}
@@ -120,8 +200,8 @@ const ChatContainer = () => {
                 <div className="relative mb-8 max-w-[220px]">
                   <p
                     className={`p-2 md:text-sm font-light rounded-lg break-all bg-violet-500/30 text-white ${msg.sender === authUser._id
-                        ? "rounded-br-none self-end"
-                        : "rounded-bl-none self-start"
+                      ? "rounded-br-none self-end"
+                      : "rounded-bl-none self-start"
                       }`}
                     style={{ wordWrap: "break-word" }}
                   >
@@ -143,12 +223,6 @@ const ChatContainer = () => {
                 </div>
               )}
 
-
-              {/* {msg.image ? (
-                <img src={msg.image} alt="" className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
-              ) : (
-                <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${msg.sender === authUser._id ? 'rounded-br-none ' : 'rounded-bl-none'}`}>{msg.text}</p>
-              )} */}
               <div className='text-center text-xs'>
                 <img className='w-7 rounded-full' src={msg.sender === authUser._id ? authUser?.profilePic || assets.avatar_icon : selectedUser?.profilePic || assets.avatar_icon} alt="" />
                 <p className='text-gray-500'>

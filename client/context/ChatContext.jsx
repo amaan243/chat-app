@@ -58,6 +58,25 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
+   const deleteMessage = async (messageId) => {
+    try {
+      const { data } = await axios.delete(`/api/messages/${messageId}`);
+      if (data.success) {
+        // We don't rely on response to update UI; server will emit 'messageDeleted' as well.
+        // But optimistically update local state to reflect deletion quickly:
+        setMessages((prev) =>
+          prev.map((m) =>
+            m._id === messageId ? { ...m, deleted: true, deletedBy: authUser._id } : m
+          )
+        );
+      } else {
+        toast.error(data.message || "Unable to delete message");
+      }
+    } catch (error) {
+      toast.error(error.message || "Error deleting message");
+    }
+  };
+
   // ✅ Listen for new messages via socket
 
 const subscribeToMessages = async () => {
@@ -65,7 +84,7 @@ const subscribeToMessages = async () => {
 
   // 🟣 Receive new incoming message
   socket.on("newMessage", (newMessage) => {
-    console.log("🟣 Incoming message:", newMessage);
+    
 
     const senderId = newMessage.sender;
     const receiverId = newMessage.receiver;
@@ -90,7 +109,7 @@ const subscribeToMessages = async () => {
 
   // 🟢 Message delivered update (from backend)
   socket.on("messageDelivered", (messageId) => {
-    console.log("✅ Message delivered:", messageId);
+    
     setMessages((prev) =>
       prev.map((msg) =>
         msg._id === messageId ? { ...msg, delivered: true } : msg
@@ -100,7 +119,7 @@ const subscribeToMessages = async () => {
 
   // 🟢 Messages seen update (from backend)
   socket.on("messagesSeen", ({ by, user }) => {
-    console.log("💙 Messages seen by:", by);
+    
     setMessages((prev) =>
       prev.map((msg) =>
         msg.receiver === by
@@ -112,7 +131,7 @@ const subscribeToMessages = async () => {
 
   // ✅ NEW: Receiver has chat open → mark message seen instantly
   socket.on("messageReceivedInActiveChat", async ({ messageId, sender }) => {
-    console.log("💬 Message received in active chat:", messageId);
+   
 
     try {
       // Update database (mark as seen)
@@ -140,7 +159,7 @@ const subscribeToMessages = async () => {
 
   // ✅ NEW: Sender gets real-time blue tick when receiver sees message
   socket.on("messageSeenByReceiver", ({ messageId, receiver }) => {
-    console.log("💙 Message seen by receiver:", receiver);
+    
     setMessages((prev) =>
       prev.map((msg) =>
         msg._id === messageId
@@ -158,6 +177,15 @@ const subscribeToMessages = async () => {
   socket.on("userStopTyping", ({ sender }) => {
     setTypingUsers((prev) => ({ ...prev, [sender]: false }));
   });
+
+  socket.on("messageDeleted", ({ messageId, deletedBy }) => {
+    
+    setMessages((prev) =>
+      prev.map((m) =>
+        m._id === messageId ? { ...m, deleted: true, deletedBy } : m
+      )
+    );
+  });
 };
 
 
@@ -170,6 +198,8 @@ const unsubscribeFromMessages = () => {
     socket.off("userStopTyping");
     socket.off("messageReceivedInActiveChat"); 
     socket.off("messageSeenByReceiver"); 
+    socket.off("messageDeleted");
+
   }
 };
 
@@ -192,6 +222,7 @@ const unsubscribeFromMessages = () => {
     setUnseenMessages,
     getMessages,
     typingUsers,
+    deleteMessage,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
