@@ -93,9 +93,7 @@ const Sidebar = () => {
 
                             <div className='flex flex-col leading-5'>
                                 <p>{user.fullName}</p>
-                                {/* <span className={`${isOnline ? 'text-green-400' : 'text-neutral-400'} text-xs`}>
-                                    {isOnline ? 'online' : 'offline'}
-                                </span> */}
+                               
                                 <span className='text-xs'>
                                     {typingUsers?.[user._id]
                                         ? <span className="text-purple-400">typing...</span>
