@@ -16,15 +16,22 @@ export const io = new Server(server, {
   }
 });
 
+
+
+
 //store online users
 
 export const userSocketMap={};//userId->socketId
+export const userActiveChatMap = {};
 io.on('connection', (socket) => {
     const userId=socket.handshake.query.userId;//get userId from query params
     console.log('User connected:', userId);
     if(userId){
       userSocketMap[userId]=socket.id;//store userId and socketId mapping
     }
+
+
+
     io.emit('getOnlineUsers',Object.keys(userSocketMap));//broadcast online users to all connected clients
 
     socket.on('typing', ({ sender, receiver }) => {
@@ -43,13 +50,29 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', userId);
+
       delete userSocketMap[userId];//remove user from online users map
+
+      delete userActiveChatMap[userId];
       io.emit('getOnlineUsers',Object.keys(userSocketMap));//broadcast updated online users to all connected clients
     })
 
+    socket.on('setActiveChat', (activeWithUserId) => {
+    if (userId) {
+      userActiveChatMap[userId] = activeWithUserId; // e.g. A -> B means A has B's chat open
+      // (optional) console.log(`${userId} is now viewing chat with ${activeWithUserId}`);
+    }
+  });
+
+  socket.on('clearActiveChat', () => {
+    if (userId) {
+      delete userActiveChatMap[userId];
+    }
+  });
+
     // 🟢 Forward "messageSeenByReceiver" from receiver -> sender
 socket.on("messageSeenByReceiver", ({ messageId, receiver, sender }) => {
-  console.log("📨 Seen event received:", { messageId, receiver, sender });
+  
 
   const senderSocketId = userSocketMap[sender];
   if (senderSocketId) {
@@ -57,7 +80,7 @@ socket.on("messageSeenByReceiver", ({ messageId, receiver, sender }) => {
       messageId,
       receiver,
     });
-    console.log("💙 Seen event sent to sender socket:", senderSocketId);
+   
   }
 });
 

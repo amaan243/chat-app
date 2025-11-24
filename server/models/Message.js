@@ -13,6 +13,10 @@ const messageSchema = new mongoose.Schema({
         ref: "User",
       },
     ],
+
+    deleted: { type: Boolean, default: false },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 const Message = mongoose.model("Message", messageSchema);
