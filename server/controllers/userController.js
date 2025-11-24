@@ -24,7 +24,7 @@ export const signup = async (req, res) => {
         const token=generateToken(newUser._id);
         res.json({ success: true, message: "Account created successfully", token, userData: newUser });
     } catch (error) {
-          console.log(error.message);
+          
           res.json({ success: false, message:error.message });
     }
 }
@@ -46,7 +46,7 @@ export const login=async (req,res)=>{
         res.json({success:true,message:"Login successful",token,userData});
     }
     catch(error){
-        console.log(error.message);
+        
         res.json({ success: false, message:error.message });
     }
 }
@@ -80,7 +80,7 @@ export const updateProfile=async(req,res)=>{
       res.json({success:true,message:"Profile updated successfully",user:updatedData});
     }
     catch(error){
-        console.log(error.message);
+        
         res.json({ success: false, message:error.message });
     }
 }
