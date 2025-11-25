@@ -186,6 +186,16 @@ const subscribeToMessages = async () => {
       )
     );
   });
+
+  // inside subscribeToMessages or your socket init
+socket.on("messageEdited", (updatedMessage) => {
+  console.log("messageEdited event", updatedMessage);
+  setMessages((prev) =>
+    prev.map((m) => (m._id === updatedMessage._id ? { ...m, ...updatedMessage } : m))
+  );
+});
+
+
 };
 
 
