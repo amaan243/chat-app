@@ -275,7 +275,7 @@ const ChatContainer = () => {
     return !!msg.edited && false; // without editedAt we don't persist label
   };
 
-  // small Edited label 
+  // Edited label component
   const EditedLabel = ({ animate = false }) => (
     <span
       className={`absolute bottom-0 right-2 text-[9px] italic text-gray-400 pointer-events-none transition-opacity duration-300 ${
