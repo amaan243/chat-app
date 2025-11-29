@@ -214,6 +214,65 @@ export const sendMessage = async (req, res) => {
   }
 };
 
+// ⬇️ make sure this is inside controllers/messageController.js
+export const editMessage = async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const userId = req.user._id.toString();
+    const { text } = req.body;
+
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({ success: false, message: "Text is required" });
+    }
+
+    const msg = await Message.findById(messageId);
+    if (!msg) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    if (msg.sender.toString() !== userId) {
+      return res.status(403).json({ success: false, message: "Not authorized to edit this message" });
+    }
+
+    if ((msg.seenBy || []).length > 0) {
+      return res.status(400).json({ success: false, message: "Cannot edit message that has been seen" });
+    }
+
+    if (msg.image) {
+      return res.status(400).json({ success: false, message: "Image messages cannot be edited" });
+    }
+
+    // ✅ update text + edit flags
+    msg.text = text;
+    msg.edited = true;
+    msg.editedAt = new Date();
+    await msg.save();
+
+    const payload = {
+      _id: msg._id.toString(),
+      sender: msg.sender.toString(),
+      receiver: msg.receiver.toString(),
+      text: msg.text,
+      edited: msg.edited,
+      editedAt: msg.editedAt,
+    };
+
+    const senderSocket = userSocketMap[msg.sender.toString()];
+    const receiverSocket = userSocketMap[msg.receiver.toString()];
+
+    if (senderSocket) io.to(senderSocket).emit("messageEdited", payload);
+    if (receiverSocket && receiverSocket !== senderSocket) {
+      io.to(receiverSocket).emit("messageEdited", payload);
+    }
+
+    return res.json({ success: true, updatedMessage: payload });
+  } catch (error) {
+    console.error("editMessage error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 
 
 // export const sendMessage = async (req, res) => {
