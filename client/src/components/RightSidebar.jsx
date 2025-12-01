@@ -12,7 +12,7 @@ const RightSidebar = () => {
 
   useEffect(()=>{
     setMsgImage(
-      messages.filter(msg=>msg.image).map(msg=>msg.image)
+      messages.filter(msg=>msg.image && !msg.deleted).map(msg=>msg.image)
     )
   },[messages]);
 

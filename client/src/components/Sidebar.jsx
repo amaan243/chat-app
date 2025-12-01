@@ -91,9 +91,12 @@ const Sidebar = () => {
                                 className='w-[35px] aspect-[1/1] rounded-full'
                             />
 
+                            
+
+
                             <div className='flex flex-col leading-5'>
                                 <p>{user.fullName}</p>
-                               
+
                                 <span className='text-xs'>
                                     {typingUsers?.[user._id]
                                         ? <span className="text-purple-400">typing...</span>
@@ -102,7 +105,11 @@ const Sidebar = () => {
                                             : <span className="text-neutral-400">offline</span>}
                                 </span>
 
+                                
+
                             </div>
+
+          
 
                             {/* ✅ Show unseen count badge */}
                             {unseenCount > 0 && (

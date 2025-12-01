@@ -15,6 +15,9 @@ export const ChatProvider = ({ children }) => {
 
   const { socket, axios, authUser } = useContext(AuthContext);
 
+ 
+
+
   // ✅ Fetch all users for sidebar
   const getUsers = async () => {
     try {
@@ -178,14 +181,24 @@ const subscribeToMessages = async () => {
     setTypingUsers((prev) => ({ ...prev, [sender]: false }));
   });
 
+  
+
   socket.on("messageDeleted", ({ messageId, deletedBy }) => {
-    
-    setMessages((prev) =>
-      prev.map((m) =>
-        m._id === messageId ? { ...m, deleted: true, deletedBy } : m
-      )
-    );
-  });
+  setMessages((prev) =>
+    prev.map((m) =>
+      m._id === messageId
+        ? {
+            ...m,
+            deleted: true,
+            deletedBy,
+            image: null,  // 🔴 remove from media on frontend
+            text: "",     // optional (your UI shows placeholder anyway)
+          }
+        : m
+    )
+  );
+});
+
 
   // inside subscribeToMessages or your socket init
 socket.on("messageEdited", (updatedMessage) => {

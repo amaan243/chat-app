@@ -104,7 +104,7 @@ export const markMessagesAsSeen = async (req, res) => {
   }
 };
 
-// controllers/messageController.js (add this export)
+
 export const deleteMessage = async (req, res) => {
   try {
     const userId = req.user._id; // requester
@@ -123,21 +123,21 @@ export const deleteMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: "Cannot delete message that has been seen" });
     }
 
-    // Mark as deleted (soft delete) so chat history stays consistent
+    // 🔴 Soft delete + clear content so it doesn't appear in Media
     msg.deleted = true;
     msg.deletedBy = userId;
     msg.deletedAt = new Date();
+    msg.image = undefined; // <-- important
+    msg.text = "";         // optional
+
     await msg.save();
 
-    // Emit socket event to both participants (if online)
-    // Send minimal payload to update UI
     const payload = {
       messageId,
       chatBetween: [msg.sender.toString(), msg.receiver.toString()],
       deletedBy: userId.toString(),
     };
 
-    // Emit to both participants if they are online
     const senderSocket = userSocketMap[msg.sender];
     const receiverSocket = userSocketMap[msg.receiver];
     if (senderSocket) io.to(senderSocket).emit("messageDeleted", payload);
@@ -145,10 +145,10 @@ export const deleteMessage = async (req, res) => {
 
     return res.json({ success: true, message: "Message deleted" });
   } catch (error) {
-   
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 // 🟢 4. Send a new message
@@ -275,49 +275,3 @@ export const editMessage = async (req, res) => {
 
 
 
-// export const sendMessage = async (req, res) => {
-//   try {
-//     const sender = req.user._id;
-//     const receiver = req.params.id;
-//     const { text, image } = req.body;
-
-//     let imageUrl;
-//     if (image) {
-//       const uploadedImage = await cloudinary.uploader.upload(image);
-//       imageUrl = uploadedImage.secure_url;
-//     }
-
-//     // 🟢 Create new message
-//     const newMessage = await Message.create({
-//       sender,
-//       receiver,
-//       text,
-//       image: imageUrl,
-//     });
-
-//     // 🟣 If receiver is online, mark message as delivered and send it
-//     const receiverSocketId = userSocketMap[receiver];
-//     if (receiverSocketId) {
-//       newMessage.delivered = true;
-//       await newMessage.save();
-
-//       // 🟢 Send new message to receiver in real-time
-//       io.to(receiverSocketId).emit("newMessage", newMessage);
-
-//       // 🟢 Notify sender message delivered
-//       io.to(userSocketMap[sender]).emit("messageDelivered", newMessage._id);
-
-//       // 🟣 NEW: If receiver is already chatting with sender,
-//       // instantly notify them and mark message as "seen"
-//       io.to(receiverSocketId).emit("messageReceivedInActiveChat", {
-//         messageId: newMessage._id,
-//         sender, // sender = the one who sent it
-//       });
-//     }
-
-//     res.json({ success: true, newMessage });
-//   } catch (error) {
-    
-//     res.json({ success: false, message: error.message });
-//   }
-// };
