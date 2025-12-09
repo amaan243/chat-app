@@ -1,0 +1,63 @@
+<!--?xml version="1.0" encoding="utf-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Dark purple chat background with glowing elegant logo">
+  <defs>
+    <!-- Base ultra-dark gradient -->
+    <linearGradient id="base" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#000000"></stop>
+      <stop offset="50%" stop-color="#08021a"></stop>
+      <stop offset="100%" stop-color="#000000"></stop>
+    </linearGradient>
+
+    <!-- Purple + blue glows -->
+    <radialGradient id="purpleGlow" cx="25%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.25"></stop>
+      <stop offset="60%" stop-color="#4c1d95" stop-opacity="0.08"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <radialGradient id="blueGlow" cx="75%" cy="75%" r="60%">
+      <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.20"></stop>
+      <stop offset="60%" stop-color="#312e81" stop-opacity="0.06"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Central logo glow -->
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="35%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"></stop>
+      <stop offset="60%" stop-color="#6d28d9" stop-opacity="0.15"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Soft blur for the glow -->
+    <filter id="softBlur"><feGaussianBlur stdDeviation="50"></feGaussianBlur></filter>
+
+    <!-- Stronger blur for the logo glow -->
+    <filter id="glow"><feGaussianBlur stdDeviation="8"></feGaussianBlur><feBlend in="SourceGraphic" mode="screen"></feBlend></filter>
+
+    <!-- Dark vignette -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="80%">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.9"></stop>
+    </radialGradient>
+  </defs>
+
+  <!-- Background base -->
+  <rect width="1600" height="900" fill="url(#base)"></rect>
+  <ellipse cx="300" cy="200" rx="480" ry="300" fill="url(#purpleGlow)" filter="url(#softBlur)"></ellipse>
+  <ellipse cx="1250" cy="700" rx="520" ry="320" fill="url(#blueGlow)" filter="url(#softBlur)"></ellipse>
+  <circle cx="800" cy="450" r="400" fill="url(#centerGlow)" filter="url(#softBlur)"></circle>
+
+  <!-- Elegant central logo -->
+  <g transform="translate(800,450) scale(6)" stroke="#c4b5fd" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <!-- Outer speech bubble -->
+    <path d="M-20 -10c0 -10 8 -18 18 -18h24c10 0 18 8 18 18v18c0 10 -8 18 -18 18h-16l-10 8 3 -8h-1c-10 0 -18 -8 -18 -18z" fill="none" stroke="#a78bfa" stroke-width="1.6" filter="url(#glow)"></path>
+    <!-- Inner sparkle symbol -->
+    <g transform="translate(0,0)">
+      <path d="M0 -4 L1 0 L0 4 L-1 0 Z" fill="none" stroke="#c4b5fd" stroke-width="1.4" filter="url(#glow)"></path>
+      <circle cx="0" cy="0" r="2" fill="#c4b5fd" opacity="0.9"></circle>
+    </g>
+  </g>
+
+  <!-- Dark vignette -->
+  <rect width="1600" height="900" fill="url(#vignette)"></rect>
+</svg>
