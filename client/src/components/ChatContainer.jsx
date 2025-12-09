@@ -1,6 +1,4 @@
 
-
-
 // src/components/ChatContainer.jsx
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import assets from '../assets/assets';

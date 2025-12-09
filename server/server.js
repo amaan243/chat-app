@@ -17,8 +17,6 @@ export const io = new Server(server, {
 });
 
 
-
-
 //store online users
 
 export const userSocketMap={};//userId->socketId
