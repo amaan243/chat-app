@@ -22,6 +22,21 @@ const messageSchema = new mongoose.Schema({
     editedAt: { type: Date, default: null },
 }, { timestamps: true });
 
+//  chat between two users (fast message loading)
+messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
+
+//  Reverse direction (receiver → sender)
+messageSchema.index({ receiver: 1, sender: 1, createdAt: -1 });
+
+//  Seen / unread optimization
+messageSchema.index({ receiver: 1, delivered: 1 });
+
+//  Cleanup / deleted messages
+messageSchema.index({ deleted: 1 });
+
+//  Timeline queries (latest messages)
+messageSchema.index({ createdAt: -1 });
+
 const Message = mongoose.model("Message", messageSchema);
 
 export default Message;
